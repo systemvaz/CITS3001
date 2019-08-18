@@ -1,3 +1,0 @@
-INDEX VERSION 1.131+C:\Users\syste\OneDrive - systemvaz\Education\UWA\2019\S2\CITS3001 - AAAI\CITS3001\workspace\.metadata\.plugins\org.eclipse.jdt.core
-2803530260.index
-3491580546.index
