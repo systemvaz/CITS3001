@@ -6,16 +6,24 @@ public class MancalaImp3 implements MancalaAgent
 
 	Node root;
 	int depth;
+	Stack<int[]> myStack;
 	
 	@Override
 	public int move(int[] board) {
 		// TODO Auto-generated method stub
-		depth = 1;
-		root = new Node(null);
+		depth = 4;
+		root = new Node(null, 0);
+		myStack = new Stack<int[]>();
 		
 		root.setBoard(board);
-		buildTree(root, depth, true, 1);
+		buildTree(root, depth, true, 1, myStack);
 		
+		while(!myStack.isEmpty())
+		{
+			int[] val = myStack.pop();
+			System.out.println(Arrays.toString(val));
+		}
+
 		return 0;
 	}
 
@@ -31,7 +39,7 @@ public class MancalaImp3 implements MancalaAgent
 		
 	}
 	
-	public void buildTree(Node n, int height, boolean isMax, int branch)
+	public void buildTree(Node n, int height, boolean isMax, int branch, Stack<int[]> myStack)
 	{
 		int[] board = n.getBoard();
 		int checkmax = 0;
@@ -73,9 +81,10 @@ public class MancalaImp3 implements MancalaAgent
 						}
 						System.out.println("Adding MAX child at Depth " + height);
 						System.out.println(Arrays.toString(board));
-						Node child = addChild(n, board);
+						myStack.push(board);
+						Node child = addChild(n, board, 1);
 						isMax = false;
-//						buildTree(child, height-1, isMax, branch);	
+						buildTree(child, height-1, isMax, branch, myStack);	
 					}
 				}		
 			}
@@ -97,25 +106,19 @@ public class MancalaImp3 implements MancalaAgent
 						}
 						System.out.println("Adding Min child at Depth" + height);
 						System.out.println(Arrays.toString(board));
-						Node child = addChild(n, board);
+						myStack.push(board);
+						Node child = addChild(n, board, 0);
 						isMax = true;
-						buildTree(child, height-1, isMax, branch);
+						buildTree(child, height-1, isMax, branch, myStack);
 					}
 				}
 			}
 		}
-		else if(height == 0)
-		{
-			if(branch < 7)
-			{
-				buildTree(root, depth, true, branch+1);	
-			}
-		}
 	}
 	
-	public Node addChild(Node parent, int[] board)
+	public Node addChild(Node parent, int[] board, int move)
 	{
-		Node node = new Node(parent);
+		Node node = new Node(parent, move);
 		node.setBoard(board);
 		parent.getChildren().add(node);
 		return node;
@@ -135,10 +138,12 @@ public class MancalaImp3 implements MancalaAgent
 		private int[] board;
 		private final List<Node> children = new ArrayList<>();
 		private final Node parent;
+		private final int move;
 		
-		public Node(Node parent)
+		public Node(Node parent, int move)
 		{
 			this.parent = parent;
+			this.move = move;
 		}
 		
 		public int[] getBoard()
