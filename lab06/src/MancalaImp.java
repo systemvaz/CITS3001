@@ -1,114 +1,232 @@
 import java.util.*;
 
+
 public class MancalaImp implements MancalaAgent
 {
-	gameNode<int[]> root;
-	int maxdepth = 2;
-	int depth = 0;
-
+	Node root;
+	int depth;
+	Stack<Node> myStack;
 	
 	@Override
 	public int move(int[] board) 
-	{	
-		//Create tree with board values
-		root = new gameNode<>(board);
-		buildTree(root, maxdepth);
-		printTree(root, " ");	
+	{
+		int move = 0;
+		depth = 8;
+		root = new Node(null, 0, false, false, 0);
+		myStack = new Stack<Node>();
 		
-		return 0;
+		root.setBoard(board);
+		buildTree(root, depth, true, 1);
+		createStack(root);
+		move = evaluateMoves(depth, board);
+		
+		return move;
 	}
 
 	@Override
-	public String name() 
-	{
-		return "MyAgent";
+	public String name() {
+		// TODO Auto-generated method stub
+		return "systemvaz";
 	}
 
 	@Override
-	public void reset() 
-	{
+	public void reset() {
+		// TODO Auto-generated method stub
 		
 	}
 	
-	public void printTree(gameNode<int[]> node, String appender) 
+	public void buildTree(Node n, int height, boolean isMax, int branch)
 	{
-		System.out.println(appender + Arrays.toString(node.getState()));
-		node.getChildren().forEach(each ->  printTree(each, appender + appender));
-	}
-	
-	public void buildTree(gameNode<int[]> node, int maxdepth)
-	{		
-		if(maxdepth != 0)
+		int[] board = n.getBoard();
+		int checkmax = 0;
+		int checkmin = 0;
+		
+		for(int i = 0; i < board.length; i++)
 		{
-			for(int j = 0; j < 6; j++)
+			if(i < 6) {if(board[i] == 0) {checkmax++;}}
+			if(i > 6) {if(board[i] == 0) {checkmin++;}}
+		}
+		
+		if(height != 0 && checkmax != 6 && checkmin != 6)
+		{			
+			if(isMax)
 			{
-				int count = j;
-				int[] board = node.getState();
-				System.out.println("State: " + Arrays.toString(board));
-				int seeds = board[j];
-				
-				if(board[j] != 0)
-				{
-					board[j] = 0;
-					while(seeds != 0)
-					{
-						count++;
-						board[count] = board[count] + 1;
-						seeds--;
-					}	
-					
-					gameNode<int[]> child = node.addChild(new gameNode<int[]>(board));
-					buildTree(child, maxdepth-1);
-				}	
+				playMax(n, board, height, isMax, branch);
+			}
+			else
+			{
+				playMin(n, board, height, isMax, branch);
 			}
 		}
 	}
 	
-	
-	
-	//Inner class defining our game tree
-	public class gameNode<T>
+	public void playMax(Node n, int[] board, int height, boolean isMax, int branch)
 	{
-		private T state = null;
-		private gameNode<T> parent = null;
-		private List<gameNode<T>> children = new ArrayList<>();
-		
-		public gameNode(T stateIn)
+		for(int i = 0; i < 6; i++)
 		{
-			this.state = stateIn;
+			int count = i;
+			int seeds = board[i];
+			if(seeds != 0 )
+			{
+				int[] tempboard = board.clone();
+				tempboard[i] = 0;
+				while(seeds != 0)
+				{
+					count++;
+					tempboard[count] = tempboard[count] + 1;
+					seeds--;
+				}
+				boolean freeMove = false;
+				boolean stealMove = false;
+				if(tempboard[count] - 1 == 0) {stealMove = true;}
+				if(count == 6) {freeMove = true;}
+				isMax = false;
+				Node child = addChild(n, tempboard, 1, freeMove, stealMove, i);
+				buildTree(child, height-1, isMax, branch);	
+			}
+		}	
+	}
+	
+	public void playMin(Node n, int[] board, int height, boolean isMax, int branch)
+	{
+		for(int i = 7; i < 13; i++)
+		{
+			int count = i;
+			int seeds = board[i];
+			if(seeds != 0)
+			{
+				int[] tempboard = board.clone();
+				tempboard[i] = 0;
+				while(seeds != 0)
+				{
+					count++;
+					count = count % 14;
+					tempboard[count] = tempboard[count] + 1;
+					seeds--;
+				}
+				boolean freeMove = false;
+				boolean stealMove = false;
+				if(tempboard[count] - 1 == 0) {stealMove = true;}
+				if(count == 13)	{freeMove = true;}
+				isMax = true;
+				Node child = addChild(n, tempboard, 0, freeMove, stealMove, i);
+				buildTree(child, height-1, isMax, branch);
+			}
+		}
+	}
+	
+	public void createStack(Node nodes)
+	{
+		myStack.push(nodes);
+		for(Node node : nodes.getChildren())
+		{
+			createStack(node);
+		}
+	}
+	
+	public int evaluateMoves(int playDepth, int[] board)
+	{
+		int min = 99999;
+		int max = -99999;
+		int maxmove = 0;
+		int maxcount = 0;
+		int[] maxvals = {0, 0, 0, 0, 0, 0};
+		
+		while(!myStack.isEmpty())
+		{
+			int eval = 0;
+			Node currNode = myStack.pop();
+			if(currNode.getParent() == null)
+			{
+				for(int i = 0; i < 6; i++)
+				{
+					int maxcheck = maxvals[i];
+					if(maxcheck > max && board[i] != 0) {maxmove = i;}
+				}
+				return maxmove;
+			}
+			if(currNode.player == 0)
+			{
+				eval -= (currNode.board[13] * 10);
+				if(currNode.freeMove == true)
+				{
+					eval -= 50; 
+				}
+				if(currNode.stealMove == true)
+				{
+					eval -= 100;
+				}
+			}
+			if(eval < min) {min = eval;}
+
+			if(currNode.player == 1)
+			{
+				if(min > max) 
+				{
+					max = Math.max(min, max);
+					maxmove = currNode.move;
+					playDepth--;
+				}	
+			}
+			
+			if(currNode.getParent().parent == null)
+			{
+				maxvals[maxcount] = max;
+				maxcount++;
+				max = -99999;
+				min = 99999;
+			}
 		}
 		
-		public gameNode<T> addChild(gameNode<T> child)
+		return maxmove;
+	}
+	
+	public Node addChild(Node parent, int[] board, int player, boolean freeMove, boolean stealMove, int move)
+	{
+		Node node = new Node(parent, player, freeMove, stealMove, move);
+		node.setBoard(board);
+		parent.getChildren().add(node);
+		return node;
+	}
+	
+	public class Node
+	{
+		private int[] board;
+		private final List<Node> children = new ArrayList<>();
+		private final Node parent;
+		private final int player;
+		private final int move;
+		private final boolean freeMove;
+		private final boolean stealMove;
+		
+		public Node(Node parent, int player, boolean freeMove, boolean stealMove, int move)
 		{
-			child.setParent(this);
-			this.children.add(child);
-			return child;
+			this.parent = parent;
+			this.player = player;
+			this.move = move;
+			this.freeMove = freeMove;
+			this.stealMove = stealMove;
 		}
 		
-		public List<gameNode<T>> getChildren()
+		public int[] getBoard()
+		{
+			return board;
+		}
+		
+		public void setBoard(int[] board)
+		{
+			this.board = board.clone();
+		}
+		
+		public List<Node> getChildren()
 		{
 			return children;
 		}
 		
-		public T getState()
-		{
-			return state;
-		}
-		
-		public void setState(T newState)
-		{
-			this.state = newState;
-		}
-		
-		private void setParent(gameNode<T> parent)
-		{
-			this.parent = parent;
-		}
-		
-		public gameNode<T> getParent()
+		public Node getParent()
 		{
 			return parent;
-		}	
+		}
 	}
 
 }

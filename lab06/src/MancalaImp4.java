@@ -107,7 +107,7 @@ public class MancalaImp4 implements MancalaAgent
 		
 		public void setBoard(int[] board)
 		{
-			this.board = board;
+			this.board = board.clone();
 		}
 		
 		public List<Node> getChildren()
