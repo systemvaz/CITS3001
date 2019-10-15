@@ -385,7 +385,7 @@ public class State implements Cloneable{
    * Should be called unplayedCards???
    * @return an array of all cards not in the discard piles
    ***/
-  public Card[] unseenCards(){
+  public Card[] get(){
     int alive = 0;
     for(int p = 0; p<num; p++)
       if(!eliminated(p))alive++;

@@ -3,9 +3,9 @@ import agents.*;
 
 public class TestGame 
 {
-	public void main(String args[])
+	public static void main(String args[])
 	{
-		RandomAgent r1 = new RandomAgent();
+		MCTSAgent r1 = new MCTSAgent();
 		RandomAgent r2 = new RandomAgent();
 		RandomAgent r3 = new RandomAgent();
 		RandomAgent r4 = new RandomAgent();
